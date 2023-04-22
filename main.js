@@ -1,4 +1,5 @@
 const { Client } = require('@notionhq/client');
+const prompt = require("prompt-sync")({ sigint: true });
 
 const notion = new Client({
     auth: process.env.NOTION_TOKEN,
@@ -28,23 +29,33 @@ function read_text(prop) {
     return prop[prop['type']][0].plain_text;
 }
 
-async function get_entries() {
+async function get_items() {
     const response = await notion.databases.query({
         database_id: databaseId,
     });
-    console.log('----------------');
+
+    let items = [];
     for(result of response['results']) {
         let s = result['properties'][src]
         let d = result['properties'][dest]
         let i = new Item(read_text(s), read_text(d), 0, 0);
         console.log('item: ' + i.key + ' = ' + i.value);
+        items.push(i);
     }
-    return 0;
+    return items;
 }
 
 (async () => {
     let x = await get_database();
     console.log("getting entries:");
-    let y = await get_entries();
+    let items = await get_items();
+    let queue = [...items];
+    while(queue.length != 0) {
+        let i = queue.shift();
+        console.log(i);
+        let isOk = prompt('is ok? ');
+        if(isOk !== 'y')
+            queue.push(i);
+    }
 })();
 
