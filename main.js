@@ -8,30 +8,36 @@ const databaseId = process.env.NOTION_DB_ID;
 const src = 'name';
 const dest = 'amount';
 
+class Item {
+    constructor(key, value, right, wrong) {
+        this.key = key;
+        this.value = value;
+        this.right = right;
+        this.wrong = wrong;
+    }
+}
+
 async function get_database() {
     const response = await notion.databases.retrieve({
         database_id: databaseId,
     });
-    console.log(response);
-    console.log(src in response['properties']);
-    console.log(dest in response['properties']);
     return 0;
+}
+
+function read_text(prop) {
+    return prop[prop['type']][0].plain_text;
 }
 
 async function get_entries() {
     const response = await notion.databases.query({
         database_id: databaseId,
     });
-    console.log(response);
     console.log('----------------');
     for(result of response['results']) {
-        for([name, prop] of Object.entries(result['properties'])) {
-            if(name != src && name != dest)
-                continue;
-            let type = prop['type']
-            let vals = prop[type]
-            console.log(name + ': ' + vals[0].plain_text)
-        }
+        let s = result['properties'][src]
+        let d = result['properties'][dest]
+        let i = new Item(read_text(s), read_text(d), 0, 0);
+        console.log('item: ' + i.key + ' = ' + i.value);
     }
     return 0;
 }
